@@ -5,10 +5,13 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.FileHandler;
 import java.util.logging.SimpleFormatter;
+
+import javax.swing.JFrame;
 
 import org.ini4j.Ini;
 import org.ini4j.InvalidFileFormatException;
@@ -27,10 +30,18 @@ public class ZonableLocation {
 	private Connection con; 
 	private int num_of_reads=0;
 	
+	private display ds;
+	private JFrame jf=new JFrame();
+	private int width=800,height=600;
+	
+	
+	
 	public ZonableLocation(String setting_path) {
 	
 		this.settings_path=setting_path;
 		this.settings = new PervasidServerSettings();
+		
+		
 		}
 	
 	public double getRSSI(long reader_id,String tag_id,int num_of_reads){
@@ -39,7 +50,7 @@ public class ZonableLocation {
 		int i=1;
 		double tag_rssi=-100;
 		try{
-		pstmt = con.prepareStatement("SELECT AVG(rssi/10) as tag_rssi FROM tag_reads_simple_new WHERE reader_id=? AND tag_id=? ORDER BY tag_read_id DESC LIMIT ?");
+		pstmt = con.prepareStatement("SELECT AVG(rssi/10) as tag_rssi FROM (SELECT rssi FROM tag_reads_simple_new WHERE reader_id=? AND tag_id=? ORDER BY tag_read_id DESC LIMIT ?) as per_tag");
 		pstmt.setLong(i++, reader_id);
 		pstmt.setString(i++, tag_id);
 		pstmt.setInt(i++, num_of_reads);
@@ -84,6 +95,52 @@ public class ZonableLocation {
 	}
 	
 	
+	public void run(){
+		
+		ds=new display(width,height,tag_id_all.length);
+		//initialise graphics
+		jf.setTitle("ZonableLocation");
+		jf.setSize(width, height);
+		jf.setVisible(true);
+		jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		jf.add(ds);	
+		int curTagPos[]=new int[2];
+		int curTagPos_x, curTagPos_y,newTagPos_x,newTagPos_y;
+		
+		
+		while(true){
+		for(int tag_index=0;tag_index<tag_id_all.length;tag_index++){
+			cellNum[tag_index]=getCellNum(tag_index);
+			System.out.println("Tag"+(tag_index+1)+":"+tag_id_all[tag_index]+" Cell "+cellNum[tag_index]);
+			
+			newTagPos_x=(ds.getWidth()/8+(cellNum[tag_index]-1)*ds.getWidth()/2)%ds.getWidth()+(tag_index*30);
+			newTagPos_y=(cellNum[tag_index]<=2?ds.getHeight()*1/8:ds.getHeight()*3/4);
+			
+			curTagPos=ds.getTagPos(tag_index);
+			curTagPos_x=curTagPos[0];
+			curTagPos_y=curTagPos[1];
+			
+			if(curTagPos_x!=newTagPos_x || curTagPos_y!=newTagPos_y){
+				ds.drawTag(newTagPos_x,newTagPos_y,tag_index);
+			}
+			
+		
+		
+		}
+		System.out.println("");
+		
+		//display tag positions
+		
+		
+		
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		}
+	}
+	
 	public void loadSettings() 
 			throws SettingsException {
 
@@ -101,11 +158,12 @@ public class ZonableLocation {
 				
 				
 		
-				Ini.Section tdma_settings = ini.get("tdma_settings");
-				Ini.Section test = ini.get("test");
+				Ini.Section location_settings = ini.get("location_settings");
+				tag_id_all=location_settings.getAll("tag_id",String[].class);
 				
-				
-				
+				reader_id_all=location_settings.getAll("reader_id",long[].class);
+				num_of_reads=location_settings.get("num_of_reads",int.class);
+				cellNum=new int[tag_id_all.length];
 
 			} catch (java.io.FileNotFoundException e) {
 				throw new SettingsException("Cannot open config file. (FileNotFoundException)");
@@ -139,16 +197,15 @@ public class ZonableLocation {
 		}
 	}
 	
+	
+	
+	
+	
 	public static void main(String[] args){
 		
 		
-		//long[] reader_id_all={12345678,87654321};
-		//String[] tag_id_all={"000000001"};
-		
 		String conf_location = "test-settings.ini";
 				
-		String current_time=null;
-		long tag_reads=0;
 
 		if (args.length > 0) {
 			//System.out.printf("From commandline args.\n");
@@ -156,51 +213,26 @@ public class ZonableLocation {
 		}
 		
 	
+		
 		ZonableLocation zl=new ZonableLocation(conf_location);
 		
 		
+		//load settings and connections
 		try {
 			zl.loadSettings();
-		} catch (SettingsException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		zl.loadConnection();
-		
-		
-		
-		Ini ini;
-		Ini.Section location_settings;
-		try {
-			ini = new Ini(new java.io.FileInputStream(new java.io.File(conf_location)));
-			location_settings = ini.get("location_settings");
-			zl.tag_id_all=location_settings.getAll("tag_id",String[].class);
-			zl.reader_id_all=location_settings.getAll("reader_id",long[].class);
-			zl.num_of_reads=location_settings.get("num_of_reads",int.class);
-		} catch (InvalidFileFormatException e1) {
-			e1.printStackTrace();
-		} catch (FileNotFoundException e1) {
-			e1.printStackTrace();
-		} catch (IOException e1) {
+			zl.loadConnection();
+		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
 		
-		int[] cellNum=new int[zl.tag_id_all.length];
-		 
-			
 		
-		while(true){
-		for(int tag_index=0;tag_index<zl.tag_id_all.length;tag_index++){
-			cellNum[tag_index]=zl.getCellNum(tag_index);
-			System.out.println("Tag"+(tag_index+1)+":"+zl.tag_id_all[tag_index]+" Cell "+cellNum[tag_index]);
-		}
-		System.out.println("");
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		}
+		//run zonable location
+		zl.run();
+		
+		
+		
+
+
 		
 		
 	}
