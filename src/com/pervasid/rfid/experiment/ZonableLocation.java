@@ -27,7 +27,6 @@ public class ZonableLocation {
 	private int[] cellNum;
 	private String settings_path;
 	private DatabaseWorker dw; 
-	private String table_name;
 	private Connection con; 
 	private int num_of_reads=0;
 	
@@ -51,7 +50,7 @@ public class ZonableLocation {
 		int i=1;
 		double tag_rssi=-100;
 		try{
-		pstmt = con.prepareStatement("SELECT AVG(rssi/10) as tag_rssi FROM (SELECT rssi FROM tag_reads_simple_new WHERE reader_id=? AND tag_id=? ORDER BY tag_read_id DESC LIMIT ?) as per_tag");
+		pstmt = con.prepareStatement("SELECT AVG(rssi/10) as tag_rssi FROM (SELECT rssi FROM tag_reads_simple WHERE reader_id=? AND tag_id=? ORDER BY tag_read_id DESC LIMIT ?) as per_tag");
 		//pstmt.setString(i++, table_name);
 		pstmt.setLong(i++, reader_id);
 		pstmt.setString(i++, tag_id);
@@ -160,8 +159,7 @@ public class ZonableLocation {
 				settings.db_port     = ini.get("database", "port", int.class);
 				
 				settings.dur_seconds = ini.get("test", "duration", int.class);
-				
-				table_name=ini.get("database","table_name", String.class);
+			
 		
 				Ini.Section location_settings = ini.get("location_settings");
 				tag_id_all=location_settings.getAll("tag_id",String[].class);
