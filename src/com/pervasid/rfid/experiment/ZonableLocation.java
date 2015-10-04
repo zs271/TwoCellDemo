@@ -8,6 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.logging.FileHandler;
 import java.util.logging.SimpleFormatter;
 
@@ -33,6 +34,7 @@ public class ZonableLocation {
 	private display ds;
 	private JFrame jf=new JFrame();
 	private int width=800,height=600;
+	private HashMap<Long,Integer> reader_hash=new HashMap<Long,Integer>();
 	
 	
 	
@@ -74,6 +76,34 @@ public class ZonableLocation {
 		
 	}
 	
+	public int getCellNum_readrate(String tag_id,int num_of_reads){
+		
+		PreparedStatement pstmt = null;
+		int i=1;
+		long located_reader_id = reader_id_all[0];
+		try{
+		pstmt = con.prepareStatement("SELECT reader_id FROM (SELECT reader_id,COUNT(*) AS read_rate FROM (SELECT  reader_id,tag_id,rssi FROM `tag_reads_simple` WHERE tag_id = ? ORDER BY tag_read_id DESC LIMIT ?) AS last_reads GROUP BY reader_id) AS read_rate_count ORDER BY read_rate DESC LIMIT 1");
+		//pstmt.setString(i++, table_name);
+		pstmt.setString(i++, tag_id);
+		pstmt.setInt(i++, num_of_reads);
+		
+		ResultSet rs = pstmt.executeQuery();
+		rs.next();
+		
+		located_reader_id= rs.getLong("reader_id");
+		pstmt.close();
+		
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+        
+		if(reader_hash.containsKey(located_reader_id)){
+		return reader_hash.get(located_reader_id);}
+		else return -1;
+		
+	}
+	
+	
 	//starting from cell 1
 	public int getCellNum(int tag_index){
 		
@@ -110,11 +140,20 @@ public class ZonableLocation {
 		jf.add(ds);	
 		int curTagPos[]=new int[2];
 		int curTagPos_x, curTagPos_y,newTagPos_x,newTagPos_y;
+		int cell_i=1;
+		for (Long reader_id:reader_id_all){
+			Integer cell_index=reader_hash.get(reader_id);
+			reader_hash.put(reader_id, cell_i++);
+			System.out.println(reader_id+" "+reader_hash.get(reader_id));
+		}
+		
 		
 		
 		while(true){
 		for(int tag_index=0;tag_index<tag_id_all.length;tag_index++){
-			cellNum[tag_index]=getCellNum(tag_index);
+			
+			
+			cellNum[tag_index]=getCellNum_readrate(tag_id_all[tag_index],num_of_reads);
 			System.out.println("Tag"+(tag_index+1)+":"+tag_id_all[tag_index]+" Cell "+cellNum[tag_index]);
 			
 			newTagPos_x=(ds.getWidth()/8+(cellNum[tag_index]-1)*ds.getWidth()/2)%ds.getWidth()+(tag_index*30);
