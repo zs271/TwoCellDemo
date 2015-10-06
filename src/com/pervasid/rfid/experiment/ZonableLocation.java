@@ -30,6 +30,7 @@ public class ZonableLocation {
 	private DatabaseWorker dw; 
 	private Connection con; 
 	private int num_of_reads=0;
+	private int read_rate=0;
 	
 	private display ds;
 	private JFrame jf=new JFrame();
@@ -82,7 +83,7 @@ public class ZonableLocation {
 		int i=1;
 		long located_reader_id = reader_id_all[0];
 		try{
-		pstmt = con.prepareStatement("SELECT reader_id FROM (SELECT reader_id,COUNT(*) AS read_rate FROM (SELECT  reader_id,tag_id,rssi FROM `tag_reads_simple` WHERE tag_id = ? ORDER BY tag_read_id DESC LIMIT ?) AS last_reads GROUP BY reader_id) AS read_rate_count ORDER BY read_rate DESC LIMIT 1");
+		pstmt = con.prepareStatement("SELECT reader_id,read_rate FROM (SELECT reader_id,COUNT(*) AS read_rate FROM (SELECT  reader_id,tag_id,rssi FROM `tag_reads_simple` WHERE tag_id = ? ORDER BY tag_read_id DESC LIMIT ?) AS last_reads GROUP BY reader_id) AS read_rate_count ORDER BY read_rate DESC LIMIT 1");
 		//pstmt.setString(i++, table_name);
 		pstmt.setString(i++, tag_id);
 		pstmt.setInt(i++, num_of_reads);
@@ -91,6 +92,9 @@ public class ZonableLocation {
 		rs.next();
 		
 		located_reader_id= rs.getLong("reader_id");
+		
+		read_rate=rs.getInt("read_rate");
+		
 		pstmt.close();
 		
 		}catch(Exception e){
@@ -155,7 +159,7 @@ public class ZonableLocation {
 			
 			cellNum[tag_index]=getCellNum_readrate(tag_id_all[tag_index],num_of_reads);
 			System.out.println("Tag"+(tag_index+1)+":"+tag_id_all[tag_index]+" Cell "+cellNum[tag_index]);
-			
+			System.out.println("read rate = "+read_rate);
 			newTagPos_x=(ds.getWidth()/8+(cellNum[tag_index]-1)*ds.getWidth()/2)%ds.getWidth()+(tag_index*30);
 			newTagPos_y=(cellNum[tag_index]<=2?ds.getHeight()*1/8:ds.getHeight()*3/4);
 			
