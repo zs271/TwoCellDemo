@@ -31,6 +31,7 @@ public class ZonableLocation {
 	private Connection con; 
 	private int num_of_reads=0;
 	private int read_rate=0;
+	private long tag_exist_time=100;
 	
 	private display ds;
 	private JFrame jf=new JFrame();
@@ -82,6 +83,8 @@ public class ZonableLocation {
 		PreparedStatement pstmt = null;
 		int i=1;
 		long located_reader_id = reader_id_all[0];
+		long time_diff=1000;
+		
 		try{
 		pstmt = con.prepareStatement("SELECT reader_id,read_rate FROM (SELECT reader_id,COUNT(*) AS read_rate FROM (SELECT  reader_id,tag_id,rssi FROM `tag_reads_simple` WHERE tag_id = ? ORDER BY tag_read_id DESC LIMIT ?) AS last_reads GROUP BY reader_id) AS read_rate_count ORDER BY read_rate DESC LIMIT 1");
 		//pstmt.setString(i++, table_name);
@@ -96,14 +99,27 @@ public class ZonableLocation {
 		read_rate=rs.getInt("read_rate");
 		
 		pstmt.close();
+		i=1;
+		pstmt = con.prepareStatement("SELECT (NOW()-server_time) AS time_diff FROM `tag_reads` WHERE tag_id = ? ORDER BY tag_read_id DESC LIMIT 1");
+		pstmt.setString(i++, tag_id);
+		rs = pstmt.executeQuery();
+		rs.next();
+		time_diff=rs.getLong("time_diff");
+		pstmt.close();
 		
 		}catch(Exception e){
 			e.printStackTrace();
 		}
         
+		
+		
+		
+		
 		if(reader_hash.containsKey(located_reader_id)){
-		return reader_hash.get(located_reader_id);}
-		else return -1;
+			if(time_diff<tag_exist_time){
+				return reader_hash.get(located_reader_id);}}
+		
+		return -1;
 		
 	}
 	
@@ -209,6 +225,7 @@ public class ZonableLocation {
 				
 				reader_id_all=location_settings.getAll("reader_id",long[].class);
 				num_of_reads=location_settings.get("num_of_reads",int.class);
+				tag_exist_time=location_settings.get("tag_exist_time",int.class);
 				cellNum=new int[tag_id_all.length];
 
 			} catch (java.io.FileNotFoundException e) {
