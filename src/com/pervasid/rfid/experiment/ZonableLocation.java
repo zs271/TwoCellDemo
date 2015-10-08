@@ -35,7 +35,7 @@ public class ZonableLocation {
 	
 	private display ds;
 	private JFrame jf=new JFrame();
-	private int width=800,height=600;
+	private int width=900,height=600;
 	private HashMap<Long,Integer> reader_hash=new HashMap<Long,Integer>();
 	
 	
@@ -176,7 +176,7 @@ public class ZonableLocation {
 			cellNum[tag_index]=getCellNum_readrate(tag_id_all[tag_index],num_of_reads);
 			System.out.println("Tag"+(tag_index+1)+":"+tag_id_all[tag_index]+" Cell "+cellNum[tag_index]);
 			System.out.println("read rate = "+read_rate);
-			newTagPos_x=(ds.getWidth()/8+(cellNum[tag_index]-1)*ds.getWidth()/2)%ds.getWidth()+(tag_index*30);
+			newTagPos_x=(ds.getWidth()/10+(cellNum[tag_index]-1)*ds.getWidth()/2)%ds.getWidth()+(tag_index*30);
 			newTagPos_y=(cellNum[tag_index]<=2?ds.getHeight()*1/8:ds.getHeight()*3/4);
 			
 			curTagPos=ds.getTagPos(tag_index);

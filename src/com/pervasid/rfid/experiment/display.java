@@ -16,7 +16,7 @@ public class display extends JPanel    {
 	
 	private int[] x,y;
 	int num_of_tags;
-	private int width=800,height=600;
+	private int width=1000,height=600;
 	
 	public display(int width,int height, int num_of_tags){
 		this.width=width;
@@ -49,7 +49,11 @@ public class display extends JPanel    {
 		for(int tag_index=0;tag_index<num_of_tags;tag_index++){
 			
 		g.setColor(Color.BLUE);
-		g.drawRect(x[tag_index],y[tag_index] , 20, 20);
+		if(tag_index>=9){
+			g.drawRect(x[tag_index],y[tag_index] , 30, 20);
+		}else{
+			g.drawRect(x[tag_index],y[tag_index] , 20, 20);
+		}
 		g.drawString(Integer.toString(tag_index+1), x[tag_index]+5, y[tag_index]+15);
 		}
 
