@@ -179,14 +179,10 @@ public class ZonableLocation {
 			System.out.println("read rate = "+read_rate);
 			//newTagPos_x=(ds.getWidth()/16+(cellNum[tag_index]-1)*ds.getWidth()/2)%ds.getWidth()+(tag_index*70);
 			
-			if (cellNum[tag_index]==1 || cellNum[tag_index]==3){
-				newTagPos_x=ds.getWidth()/35*2+(cellNum[tag_index]-1)*ds.getWidth()/35*13;
-				newTagPos_y=(ds.getHeight()*1/3+(tag_index)*20+40);
-			}else if (cellNum[tag_index]==2){	
-				newTagPos_x=(tag_index<5?width/35*13:width/35*22);
-				newTagPos_y=(tag_index<5?((tag_index)*20):(tag_index-5)*20)+40;
+				newTagPos_x=ds.getWidth()/30*2+(cellNum[tag_index]-1)*ds.getWidth()/30*10;
+				newTagPos_y=(0+(tag_index)*20+30);
 				
-			}else{
+			if(cellNum[tag_index]==-1){
 				newTagPos_x=-50;
 				newTagPos_y=-50;
 			}
