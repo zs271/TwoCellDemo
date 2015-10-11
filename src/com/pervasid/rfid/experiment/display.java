@@ -15,8 +15,9 @@ public class display extends JPanel    {
 	
 	
 	private int[] x,y;
+	private String[] tag_type=new String[20];
 	int num_of_tags;
-	private int width=1000,height=600;
+	private int width=1200,height=900;
 	
 	public display(int width,int height, int num_of_tags){
 		this.width=width;
@@ -33,38 +34,38 @@ public class display extends JPanel    {
 		g.setColor(Color.white);
 		g.fillRect(0, 0, width, height);
 		g.setColor(Color.RED);
-		g.drawRect(0, 0, width-10, height-10);
-		g.drawLine(0, height/2, width-10, height/2);
-		g.drawLine(width/2, 0, width/2, height-10);
+		//g.drawRect(0, 0, width-10, height-10);
+		g.drawRect(0, height/3, width/35*10,height/3*2-10 );
+		g.drawRect(width/35*10, 0, width/35*15,height/3*1 );
+		g.drawRect(width/35*25, height/3, width/35*10,height/3*2-10 );
 		
 		
 		Font font = new Font("Courier", Font.BOLD,18);
 		g.setFont(font);
-		g.drawString("Cell 1", width/20, height/20);
-		g.drawString("Cell 2", width/20+width/2, height/20);
-		g.drawString("Cell 3", width/20, height/20+height/2);
-		g.drawString("Cell 4", width/20+width/2, height/20+height/2);
+		g.drawString("Cell 1", 0+30, height/3+30);
+		g.drawString("Cell 2", width/35*10+30, 0+30);
+		g.drawString("Cell 3", width/35*25+30, height/3+30);
 
 	
 		for(int tag_index=0;tag_index<num_of_tags;tag_index++){
+		
 			
 		g.setColor(Color.BLUE);
-		if(tag_index>=9){
-			g.drawRect(x[tag_index],y[tag_index] , 30, 20);
-		}else{
-			g.drawRect(x[tag_index],y[tag_index] , 20, 20);
-		}
-		g.drawString(Integer.toString(tag_index+1), x[tag_index]+5, y[tag_index]+15);
+		
+		//g.drawRect(x[tag_index],y[tag_index] , 30, 20);
+		
+		
+		g.drawString(tag_type[tag_index], x[tag_index]+5, y[tag_index]+15);
 		}
 
 		
 	}
 	
 	
-	public void drawTag(int x,int y,int tag_index){
-
+	public void drawTag(int x,int y,int tag_index,String tag_type){
 		this.x[tag_index]=x;
 		this.y[tag_index]=y;
+		this.tag_type[tag_index]=tag_type;
 		repaint();
 		
 	}
@@ -93,10 +94,10 @@ public class display extends JPanel    {
 	
 	
 	public static void main(String args[]){
-		display ds=new display(600,400,4);
+		display ds=new display(1050,450,4);
 		JFrame jf=new JFrame();
 		jf.setTitle("ZonableLocation");
-		jf.setSize(600, 400);
+		jf.setSize(1050, 450);
 		jf.setVisible(true);
 		jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		jf.add(ds);

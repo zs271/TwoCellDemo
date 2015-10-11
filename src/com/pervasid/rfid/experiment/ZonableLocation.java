@@ -24,6 +24,7 @@ public class ZonableLocation {
 	private PervasidServerSettings settings;
 	private long[] reader_id_all;
 	private String[] tag_id_all;
+	private String[] tag_type_all;
 	private double[] tag_rssi;
 	private int[] cellNum;
 	private String settings_path;
@@ -35,7 +36,7 @@ public class ZonableLocation {
 	
 	private display ds;
 	private JFrame jf=new JFrame();
-	private int width=900,height=600;
+	private int width=1300,height=550;
 	private HashMap<Long,Integer> reader_hash=new HashMap<Long,Integer>();
 	
 	
@@ -154,7 +155,7 @@ public class ZonableLocation {
 		ds=new display(width,height,tag_id_all.length);
 		//initialise graphics
 		jf.setTitle("ZonableLocation");
-		jf.setSize(width, height);
+		jf.setSize(width+50, height+50);
 		jf.setVisible(true);
 		jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		jf.add(ds);	
@@ -176,15 +177,28 @@ public class ZonableLocation {
 			cellNum[tag_index]=getCellNum_readrate(tag_id_all[tag_index],num_of_reads);
 			System.out.println("Tag"+(tag_index+1)+":"+tag_id_all[tag_index]+" Cell "+cellNum[tag_index]);
 			System.out.println("read rate = "+read_rate);
-			newTagPos_x=(ds.getWidth()/10+(cellNum[tag_index]-1)*ds.getWidth()/2)%ds.getWidth()+(tag_index*30);
-			newTagPos_y=(cellNum[tag_index]<=2?ds.getHeight()*1/8:ds.getHeight()*3/4);
+			//newTagPos_x=(ds.getWidth()/16+(cellNum[tag_index]-1)*ds.getWidth()/2)%ds.getWidth()+(tag_index*70);
+			
+			if (cellNum[tag_index]==1 || cellNum[tag_index]==3){
+				newTagPos_x=ds.getWidth()/35*2+(cellNum[tag_index]-1)*ds.getWidth()/35*13;
+				newTagPos_y=(ds.getHeight()*1/3+(tag_index)*20+40);
+			}else if (cellNum[tag_index]==2){	
+				newTagPos_x=(tag_index<5?width/35*13:width/35*22);
+				newTagPos_y=(tag_index<5?((tag_index)*20):(tag_index-5)*20)+40;
+				
+			}else{
+				newTagPos_x=-50;
+				newTagPos_y=-50;
+			}
+				
+			//newTagPos_y=(cellNum[tag_index]<=2?ds.getHeight()*1/16:ds.getHeight()*5/8);
 			
 			curTagPos=ds.getTagPos(tag_index);
 			curTagPos_x=curTagPos[0];
 			curTagPos_y=curTagPos[1];
 			
 			if(curTagPos_x!=newTagPos_x || curTagPos_y!=newTagPos_y){
-				ds.drawTag(newTagPos_x,newTagPos_y,tag_index);
+				ds.drawTag(newTagPos_x,newTagPos_y,tag_index,tag_type_all[tag_index]);
 			}
 			
 		
@@ -222,6 +236,7 @@ public class ZonableLocation {
 		
 				Ini.Section location_settings = ini.get("location_settings");
 				tag_id_all=location_settings.getAll("tag_id",String[].class);
+				tag_type_all=location_settings.getAll("tag_type",String[].class);
 				
 				reader_id_all=location_settings.getAll("reader_id",long[].class);
 				num_of_reads=location_settings.get("num_of_reads",int.class);
