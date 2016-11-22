@@ -1,0 +1,7 @@
+SELECT reader_id,MAX(read_rate) FROM (SELECT reader_id,COUNT(*) AS read_rate FROM (SELECT  reader_id,tag_id,rssi FROM `tag_reads_simple` WHERE tag_id LIKE "%253df%" ORDER BY tag_read_id DESC LIMIT 10) AS last_reads GROUP BY reader_id) AS read_rate_count
+
+
+SELECT reader_id FROM (SELECT reader_id,COUNT(*) AS read_rate FROM (SELECT  reader_id,tag_id,rssi FROM `tag_reads_simple` WHERE tag_id LIKE "%253df%" ORDER BY tag_read_id DESC LIMIT 10) AS last_reads GROUP BY reader_id) AS new ORDER BY read_rate DESC LIMIT 1
+
+
+SELECT reader_id FROM (SELECT reader_id,COUNT(*) AS read_rate FROM (SELECT  reader_id,tag_id,rssi FROM `tag_reads_simple` WHERE tag_id ="80000000000253d900000000" ORDER BY tag_read_id DESC LIMIT 5) AS last_reads GROUP BY reader_id) AS new ORDER BY read_rate DESC LIMIT 1

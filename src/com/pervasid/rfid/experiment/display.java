@@ -35,16 +35,16 @@ public class display extends JPanel    {
 		g.fillRect(0, 0, width, height);
 		g.setColor(Color.RED);
 		//g.drawRect(0, 0, width-10, height-10);
-		g.drawRect(0, 10, width/30*10,height-30 );
-		g.drawRect(width/30*10, 10, width/30*10,height-30 );
-		g.drawRect(width/30*20, 10, width/30*10,height-30 );
+		g.drawRect(0, 10, width/20*10,height-30 );
+		g.drawRect(width/20*10, 10, width/20*10,height-30 );
+		//g.drawRect(width/30*20, 10, width/30*10,height-30 );
 		
 		
 		Font font = new Font("Courier", Font.BOLD,18);
 		g.setFont(font);
 		g.drawString("Cell 1", 0+20, 30);
-		g.drawString("Cell 2", width/30*10+20, 30);
-		g.drawString("Cell 3", width/30*20+20, 30);
+		g.drawString("Cell 2", width/20*10+20, 30);
+		//g.drawString("Cell 3", width/30*20+20, 30);
 
 	
 		for(int tag_index=0;tag_index<num_of_tags;tag_index++){

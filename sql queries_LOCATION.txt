@@ -1,0 +1,17 @@
+near other cell
+01111111    127
+10111111    191
+11111101    253
+11111110    254
+
+ 
+11011111    223
+11101111    239
+11110111    247
+11111011    251
+
+tag_id
+ffffffffffffffffffffff26
+
+
+SELECT AVG(rssi) FROM (SELECT rssi FROM tag_reads WHERE tag_id="ffffffffffffffffffffff26" LIMIT 100) AS last_reads GROUP BY switch_state 

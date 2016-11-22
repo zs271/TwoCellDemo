@@ -39,13 +39,20 @@ public class ZonableLocation {
 	private int width=1300,height=550;
 	private HashMap<Long,Integer> reader_hash=new HashMap<Long,Integer>();
 	
+	private EmailAlert alert;
+	private final String username = "pervasid99";
+	private final String password = "pervasid";
+	private String smtpServer="smtp.gmail.com";
+	private String sender="pervasid99@gmail.com";
+	private String recepient="zsc33zsc@gmail.com";
+	
 	
 	
 	public ZonableLocation(String setting_path) {
 	
 		this.settings_path=setting_path;
 		this.settings = new PervasidServerSettings();
-		
+		this.alert=new EmailAlert(username,password,smtpServer,sender,recepient);
 		
 		}
 	
@@ -111,10 +118,6 @@ public class ZonableLocation {
 		}catch(Exception e){
 			e.printStackTrace();
 		}
-        
-		
-		
-		
 		
 		if(reader_hash.containsKey(located_reader_id)){
 			if(time_diff<tag_exist_time){
@@ -162,25 +165,32 @@ public class ZonableLocation {
 		int curTagPos[]=new int[2];
 		int curTagPos_x, curTagPos_y,newTagPos_x,newTagPos_y;
 		int cell_i=1;
+		long tlastTogether,tlastDepart,tTogetherEnd,tDepartEnd,togetherSent,departSent;
+		
 		for (Long reader_id:reader_id_all){
 			Integer cell_index=reader_hash.get(reader_id);
 			reader_hash.put(reader_id, cell_i++);
 			System.out.println(reader_id+" "+reader_hash.get(reader_id));
 		}
 		
-		
+		tlastTogether=System.currentTimeMillis();
+		tlastDepart=System.currentTimeMillis();
+		togetherSent=0;
+		departSent=0;
 		
 		while(true){
+			
+		//repeatedly find the cell for each tag, and update their positions 	
 		for(int tag_index=0;tag_index<tag_id_all.length;tag_index++){
 			
 			
 			cellNum[tag_index]=getCellNum_readrate(tag_id_all[tag_index],num_of_reads);
-			System.out.println("Tag"+(tag_index+1)+":"+tag_id_all[tag_index]+" Cell "+cellNum[tag_index]);
-			System.out.println("read rate = "+read_rate);
+			//System.out.println("Tag"+(tag_index+1)+":"+tag_id_all[tag_index]+" Cell "+cellNum[tag_index]);
+			//System.out.println("read rate = "+read_rate);
 			//newTagPos_x=(ds.getWidth()/16+(cellNum[tag_index]-1)*ds.getWidth()/2)%ds.getWidth()+(tag_index*70);
 			
-				newTagPos_x=ds.getWidth()/30*2+(cellNum[tag_index]-1)*ds.getWidth()/30*10;
-				newTagPos_y=(0+(tag_index)*20+30);
+				newTagPos_x=ds.getWidth()/20*2+(cellNum[tag_index]-1)*ds.getWidth()/20*10;
+				newTagPos_y=(0+(tag_index)*20+50);
 				
 			if(cellNum[tag_index]==-1){
 				newTagPos_x=-50;
@@ -197,10 +207,43 @@ public class ZonableLocation {
 				ds.drawTag(newTagPos_x,newTagPos_y,tag_index,tag_type_all[tag_index]);
 			}
 			
-		
-		
+		      
+
 		}
-		System.out.println("");
+		
+		//if the odd tag is not in the same zone as the even tag, start counter
+		if(cellNum[0]==cellNum[1]){
+			tlastTogether=System.currentTimeMillis();
+			
+		}else{
+			tlastDepart=System.currentTimeMillis();
+		}
+		
+		
+		long tnow=System.currentTimeMillis();
+		//Tags have been departed for a certain time
+		if((tnow-tlastTogether)/1000>10){
+			if(departSent==0){
+			alert.sendEmail("Sicheng", "Alert!", "Warning: "+tag_type_all[0]+" and "+ tag_type_all[1]+" have been seperated!");
+			departSent=1;
+			togetherSent=0;
+			}
+		}
+		
+		//tags have been together for a certain time
+		if((tnow-tlastDepart)/1000>10){
+			if(togetherSent==0){
+				alert.sendEmail("Sicheng", "Alert!", "Warning: "+tag_type_all[0]+" and "+ tag_type_all[1]+" have been together for too long!");
+				togetherSent=1;
+				departSent=0;
+				}
+			
+		}
+		
+		
+		
+		
+		//System.out.println("");
 		
 		//display tag positions
 		
