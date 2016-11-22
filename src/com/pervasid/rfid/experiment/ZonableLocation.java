@@ -33,6 +33,8 @@ public class ZonableLocation {
 	private int num_of_reads=0;
 	private int read_rate=0;
 	private long tag_exist_time=100;
+	private long together_limit;
+	private long depart_limit;
 	
 	private display ds;
 	private JFrame jf=new JFrame();
@@ -52,7 +54,7 @@ public class ZonableLocation {
 	
 		this.settings_path=setting_path;
 		this.settings = new PervasidServerSettings();
-		this.alert=new EmailAlert(username,password,smtpServer,sender,recepient);
+		
 		
 		}
 	
@@ -222,7 +224,7 @@ public class ZonableLocation {
 		
 		long tnow=System.currentTimeMillis();
 		//Tags have been departed for a certain time
-		if((tnow-tlastTogether)/1000>10){
+		if((tnow-tlastTogether)/1000>depart_limit){
 			if(departSent==0){
 			alert.sendEmail("Sicheng", "Alert!", "Warning: "+tag_type_all[0]+" and "+ tag_type_all[1]+" have been seperated!");
 			departSent=1;
@@ -231,7 +233,7 @@ public class ZonableLocation {
 		}
 		
 		//tags have been together for a certain time
-		if((tnow-tlastDepart)/1000>10){
+		if((tnow-tlastDepart)/1000>together_limit){
 			if(togetherSent==0){
 				alert.sendEmail("Sicheng", "Alert!", "Warning: "+tag_type_all[0]+" and "+ tag_type_all[1]+" have been together for too long!");
 				togetherSent=1;
@@ -275,12 +277,19 @@ public class ZonableLocation {
 		
 				Ini.Section location_settings = ini.get("location_settings");
 				tag_id_all=location_settings.getAll("tag_id",String[].class);
-				tag_type_all=location_settings.getAll("tag_type",String[].class);
+				tag_type_all=location_settings.getAll("tag_name",String[].class);
 				
 				reader_id_all=location_settings.getAll("reader_id",long[].class);
 				num_of_reads=location_settings.get("num_of_reads",int.class);
 				tag_exist_time=location_settings.get("tag_exist_time",int.class);
+				
+				Ini.Section alert_settings=ini.get("alert_settings");
+				together_limit=alert_settings.get("together_limit",long.class);
+				depart_limit=alert_settings.get("depart_limit",long.class);
+				this.alert=new EmailAlert(username,password,smtpServer,sender,recepient);
+				
 				cellNum=new int[tag_id_all.length];
+				
 
 			} catch (java.io.FileNotFoundException e) {
 				throw new SettingsException("Cannot open config file. (FileNotFoundException)");
