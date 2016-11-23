@@ -41,12 +41,14 @@ public class ZonableLocation {
 	private int width=1300,height=550;
 	private HashMap<Long,Integer> reader_hash=new HashMap<Long,Integer>();
 	
-	private EmailAlert alert;
-	private final String username = "pervasid99";
-	private final String password = "pervasid";
+	private EmailAlert emailAlert;
+	private SMSAlert smsAlert;
+	private String username = "pervasid99";
+	private String password = "pervasid";
 	private String smtpServer="smtp.gmail.com";
 	private String sender="pervasid99@gmail.com";
 	private String recepient="zsc33zsc@gmail.com";
+	private String phoneNumber;
 	
 	
 	
@@ -54,7 +56,7 @@ public class ZonableLocation {
 	
 		this.settings_path=setting_path;
 		this.settings = new PervasidServerSettings();
-		
+		this.smsAlert=new SMSAlert();
 		
 		}
 	
@@ -226,7 +228,9 @@ public class ZonableLocation {
 		//Tags have been departed for a certain time
 		if((tnow-tlastTogether)/1000>depart_limit){
 			if(departSent==0){
-			alert.sendEmail("Sicheng", "Alert!", "Warning: "+tag_type_all[0]+" and "+ tag_type_all[1]+" have been seperated!");
+				String alertMessage="Alert!Warning: "+tag_type_all[0]+" and "+ tag_type_all[1]+" have been seperated!";
+			emailAlert.sendEmail("Sicheng", "Alert!", "Warning: "+tag_type_all[0]+" and "+ tag_type_all[1]+" have been seperated!");
+			smsAlert.sendSMS(phoneNumber, alertMessage);
 			departSent=1;
 			togetherSent=0;
 			}
@@ -235,7 +239,10 @@ public class ZonableLocation {
 		//tags have been together for a certain time
 		if((tnow-tlastDepart)/1000>together_limit){
 			if(togetherSent==0){
-				alert.sendEmail("Sicheng", "Alert!", "Warning: "+tag_type_all[0]+" and "+ tag_type_all[1]+" have been together for too long!");
+				String alertMessage="Alert!Warning: "+tag_type_all[0]+" and "+ tag_type_all[1]+" have been together for too long!";
+				emailAlert.sendEmail("Sicheng", "Alert!", "Warning: "+tag_type_all[0]+" and "+ tag_type_all[1]+" have been together for too long!");
+				
+				smsAlert.sendSMS(phoneNumber, alertMessage);
 				togetherSent=1;
 				departSent=0;
 				}
@@ -286,7 +293,14 @@ public class ZonableLocation {
 				Ini.Section alert_settings=ini.get("alert_settings");
 				together_limit=alert_settings.get("together_limit",long.class);
 				depart_limit=alert_settings.get("depart_limit",long.class);
-				this.alert=new EmailAlert(username,password,smtpServer,sender,recepient);
+				username=alert_settings.get("username",String.class);
+				password=alert_settings.get("password",String.class);
+				smtpServer=alert_settings.get("smtpServer",String.class);
+				sender=alert_settings.get("sender",String.class);
+				recepient=alert_settings.get("recepient",String.class);
+				phoneNumber=alert_settings.get("phoneNumber",String.class);
+				
+				this.emailAlert=new EmailAlert(username,password,smtpServer,sender,recepient);
 				
 				cellNum=new int[tag_id_all.length];
 				
