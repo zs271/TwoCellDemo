@@ -169,7 +169,7 @@ public class ZonableLocation {
 		int curTagPos[]=new int[2];
 		int curTagPos_x, curTagPos_y,newTagPos_x,newTagPos_y;
 		int cell_i=1;
-		long tlastTogether,tlastDepart,tTogetherEnd,tDepartEnd,togetherSent,departSent;
+		long[] tlastTogether,tlastDepart,tTogetherEnd,tDepartEnd,togetherSent,departSent;
 		
 		for (Long reader_id:reader_id_all){
 			Integer cell_index=reader_hash.get(reader_id);
@@ -177,11 +177,21 @@ public class ZonableLocation {
 			System.out.println(reader_id+" "+reader_hash.get(reader_id));
 		}
 		
-		tlastTogether=System.currentTimeMillis();
-		tlastDepart=System.currentTimeMillis();
-		togetherSent=0;
-		departSent=0;
+		int numOfPairs=tag_id_all.length/2;
 		
+		tlastTogether=new long[numOfPairs];
+		tlastDepart=new long[numOfPairs];
+		togetherSent=new long[numOfPairs];
+		departSent=new long[numOfPairs];
+		
+		for (int i=0;i<numOfPairs;i++){
+			tlastTogether[i]=System.currentTimeMillis();
+			tlastDepart[i]=System.currentTimeMillis();
+			togetherSent[i]=0;
+			departSent[i]=0;
+		}
+			
+
 		while(true){
 			
 		//repeatedly find the cell for each tag, and update their positions 	
@@ -216,39 +226,42 @@ public class ZonableLocation {
 		}
 		
 		//if the odd tag is not in the same zone as the even tag, start counter
-		if(cellNum[0]==cellNum[1]){
-			tlastTogether=System.currentTimeMillis();
+		for (int i=0;i<numOfPairs;i++){
+			if(cellNum[2*i]==cellNum[2*i+1]){
+			tlastTogether[i]=System.currentTimeMillis();
 			
-		}else{
-			tlastDepart=System.currentTimeMillis();
+			}else{
+				tlastDepart[i]=System.currentTimeMillis();
+			}
 		}
 		
 		
 		long tnow=System.currentTimeMillis();
 		//Tags have been departed for a certain time
-		if((tnow-tlastTogether)/1000>depart_limit){
-			if(departSent==0){
-				String alertMessage="Alert!Warning: "+tag_type_all[0]+" and "+ tag_type_all[1]+" have been seperated!";
-			emailAlert.sendEmail("Sicheng", "Alert!", "Warning: "+tag_type_all[0]+" and "+ tag_type_all[1]+" have been seperated!");
-			smsAlert.sendSMS(phoneNumber, alertMessage);
-			departSent=1;
-			togetherSent=0;
+		
+		for (int i=0;i<numOfPairs;i++){
+			if((tnow-tlastTogether[i])/1000>depart_limit){
+				if(departSent[i]==0){
+					String alertMessage="Alert!Warning: "+tag_type_all[2*i]+" and "+ tag_type_all[2*i+1]+" have been seperated!";
+					emailAlert.sendEmail("Sicheng", "Alert!", "Warning: "+tag_type_all[2*i]+" and "+ tag_type_all[2*i+1]+" have been seperated!");
+					//smsAlert.sendSMS(phoneNumber, alertMessage);
+					departSent[i]=1;
+					togetherSent[i]=0;
+				}
 			}
-		}
 		
 		//tags have been together for a certain time
-		if((tnow-tlastDepart)/1000>together_limit){
-			if(togetherSent==0){
-				String alertMessage="Alert!Warning: "+tag_type_all[0]+" and "+ tag_type_all[1]+" have been together for too long!";
-				emailAlert.sendEmail("Sicheng", "Alert!", "Warning: "+tag_type_all[0]+" and "+ tag_type_all[1]+" have been together for too long!");
+			if((tnow-tlastDepart[i])/1000>together_limit){
+				if(togetherSent[i]==0){
+					String alertMessage="Alert!Warning: "+tag_type_all[2*i]+" and "+ tag_type_all[2*i+1]+" have been together for too long!";
+					emailAlert.sendEmail("Sicheng", "Alert!", "Warning: "+tag_type_all[2*i]+" and "+ tag_type_all[2*i+1]+" have been together for too long!");	
+					//smsAlert.sendSMS(phoneNumber, alertMessage);
+					togetherSent[i]=1;
+					departSent[i]=0;
+					}
 				
-				smsAlert.sendSMS(phoneNumber, alertMessage);
-				togetherSent=1;
-				departSent=0;
-				}
-			
+			}
 		}
-		
 		
 		
 		
