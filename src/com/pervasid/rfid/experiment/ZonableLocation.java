@@ -49,6 +49,7 @@ public class ZonableLocation {
 	private String sender="pervasid99@gmail.com";
 	private String recepient="zsc33zsc@gmail.com";
 	private String phoneNumber;
+	private DatabaseAlert dbAlert;
 	
 	
 	
@@ -174,7 +175,7 @@ public class ZonableLocation {
 		for (Long reader_id:reader_id_all){
 			Integer cell_index=reader_hash.get(reader_id);
 			reader_hash.put(reader_id, cell_i++);
-			System.out.println(reader_id+" "+reader_hash.get(reader_id));
+			//System.out.println(reader_id+" "+reader_hash.get(reader_id));
 		}
 		
 		int numOfPairs=tag_id_all.length/2;
@@ -242,8 +243,11 @@ public class ZonableLocation {
 		for (int i=0;i<numOfPairs;i++){
 			if((tnow-tlastTogether[i])/1000>depart_limit){
 				if(departSent[i]==0){
-					String alertMessage="Alert!Warning: "+tag_type_all[2*i]+" and "+ tag_type_all[2*i+1]+" have been seperated!";
-					emailAlert.sendEmail("Sicheng", "Alert!", "Warning: "+tag_type_all[2*i]+" and "+ tag_type_all[2*i+1]+" have been seperated!");
+					String alertMessage="Alert!Warning: "+tag_type_all[2*i]+" and "+ tag_type_all[2*i+1]+" are split!";
+					emailAlert.sendEmail("Sicheng", "Alert!", "Warning: "+tag_type_all[2*i]+" and "+ tag_type_all[2*i+1]+" are split!");
+					dbAlert.sendDBAlert(tag_id_all[2*i], cellNum[2*i],reader_id_all[cellNum[2*i]-1], "Split", alertMessage);
+					dbAlert.sendDBAlert(tag_id_all[2*i+1], cellNum[2*i+1],reader_id_all[cellNum[2*i+1]-1], "Split", alertMessage);
+
 					//smsAlert.sendSMS(phoneNumber, alertMessage);
 					departSent[i]=1;
 					togetherSent[i]=0;
@@ -253,8 +257,11 @@ public class ZonableLocation {
 		//tags have been together for a certain time
 			if((tnow-tlastDepart[i])/1000>together_limit){
 				if(togetherSent[i]==0){
-					String alertMessage="Alert!Warning: "+tag_type_all[2*i]+" and "+ tag_type_all[2*i+1]+" have been together for too long!";
-					emailAlert.sendEmail("Sicheng", "Alert!", "Warning: "+tag_type_all[2*i]+" and "+ tag_type_all[2*i+1]+" have been together for too long!");	
+					String alertMessage="Alert!Warning: "+tag_type_all[2*i]+" and "+ tag_type_all[2*i+1]+" are together for too long!";
+					emailAlert.sendEmail("Sicheng", "Alert!", "Warning: "+tag_type_all[2*i]+" and "+ tag_type_all[2*i+1]+" are together for too long!");	
+					dbAlert.sendDBAlert(tag_id_all[2*i], cellNum[2*i], reader_id_all[cellNum[2*i]-1], "Together", alertMessage);
+					dbAlert.sendDBAlert(tag_id_all[2*i+1], cellNum[2*i+1], reader_id_all[cellNum[2*i+1]-1], "Together", alertMessage);
+
 					//smsAlert.sendSMS(phoneNumber, alertMessage);
 					togetherSent[i]=1;
 					departSent[i]=0;
@@ -339,6 +346,8 @@ public class ZonableLocation {
 		try{
 			dw= new DatabaseWorker(settings);
 			con= dw.getConnection();	
+			this.dbAlert=new DatabaseAlert(con);
+			
 		}catch(Exception e){
 			e.printStackTrace();
 		}
