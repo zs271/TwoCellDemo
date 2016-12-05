@@ -17,8 +17,8 @@ public class SMSAlert {
 		
 		try {
             //String phoneNumber = "+447442259123";
-            String appKey = "fe924838-5af8-4eb3-8693-ecc32a4e74b2";
-            String appSecret = "vqWMU9AEI0GDpgefJO4hzg==";
+            String appKey = "999092e9-785b-401d-b2b5-342f19141bce";
+            String appSecret = "sv/mUwUCFEy1FF0uxETQxg==";
             //String message = "Hello, world!";
             URL url = new URL("https://messagingapi.sinch.com/v1/sms/" + phoneNumber);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();

@@ -27,6 +27,8 @@ public class ZonableLocation {
 	private String[] tag_type_all;
 	private double[] tag_rssi;
 	private int[] cellNum;
+	private Boolean useReadRate;
+	private Boolean activateSMS;
 	private String settings_path;
 	private DatabaseWorker dw; 
 	private Connection con; 
@@ -91,7 +93,7 @@ public class ZonableLocation {
 		
 	}
 	
-	public int getCellNum_readrate(String tag_id,int num_of_reads){
+	public int getCellNum_readrate(String tag_id){
 		
 		PreparedStatement pstmt = null;
 		int i=1;
@@ -128,20 +130,20 @@ public class ZonableLocation {
 			if(time_diff<tag_exist_time){
 				return reader_hash.get(located_reader_id);}}
 		
-		return -1;
+		return 2;
 		
 	}
 	
 	
 	//starting from cell 1
-	public int getCellNum(int tag_index){
+	public int getCellNum_RSSI(String tag_id){
 		
 		
 		int MaxRSSI_pos=0;
-		double MaxRSSI=getRSSI(this.reader_id_all[0],tag_id_all[tag_index],num_of_reads);
+		double MaxRSSI=getRSSI(this.reader_id_all[0],tag_id,num_of_reads);
 		double rssi_temp;
 		for (int cell_index=1;cell_index<reader_id_all.length;cell_index++){
-			rssi_temp=getRSSI(reader_id_all[cell_index],tag_id_all[tag_index],num_of_reads);
+			rssi_temp=getRSSI(reader_id_all[cell_index],tag_id,num_of_reads);
 			if (rssi_temp>MaxRSSI) {
 				MaxRSSI=rssi_temp;
 				MaxRSSI_pos=cell_index;
@@ -198,8 +200,11 @@ public class ZonableLocation {
 		//repeatedly find the cell for each tag, and update their positions 	
 		for(int tag_index=0;tag_index<tag_id_all.length;tag_index++){
 			
-			
-			cellNum[tag_index]=getCellNum_readrate(tag_id_all[tag_index],num_of_reads);
+			if(useReadRate){
+			cellNum[tag_index]=getCellNum_readrate(tag_id_all[tag_index]);
+			}else{
+			cellNum[tag_index]=getCellNum_RSSI(tag_id_all[tag_index]);	
+			}
 			//System.out.println("Tag"+(tag_index+1)+":"+tag_id_all[tag_index]+" Cell "+cellNum[tag_index]);
 			//System.out.println("read rate = "+read_rate);
 			//newTagPos_x=(ds.getWidth()/16+(cellNum[tag_index]-1)*ds.getWidth()/2)%ds.getWidth()+(tag_index*70);
@@ -238,31 +243,48 @@ public class ZonableLocation {
 		
 		
 		long tnow=System.currentTimeMillis();
-		//Tags have been departed for a certain time
+		
 		
 		for (int i=0;i<numOfPairs;i++){
+			
+			if(cellNum[2*i]>0 && cellNum[2*i+1]>0){
+				//Tags have been departed for a certain time
 			if((tnow-tlastTogether[i])/1000>depart_limit){
 				if(departSent[i]==0){
-					String alertMessage="Alert!Warning: "+tag_type_all[2*i]+" and "+ tag_type_all[2*i+1]+" are split!";
-					emailAlert.sendEmail("Sicheng", "Alert!", "Warning: "+tag_type_all[2*i]+" and "+ tag_type_all[2*i+1]+" are split!");
+					String alertMessage="Alert!"+tag_type_all[2*i]+" and "+ tag_type_all[2*i+1]+" are split!";
+					//emailAlert.sendEmail("Sicheng", "Alert!", "Warning: "+tag_type_all[2*i]+" and "+ tag_type_all[2*i+1]+" are split!");
+					//emailAlert.sendEmail("Sicheng", "Alert!","https://physicaltrackingsystemltd.onknowledgekubesandbox.co.uk/asset-alert?TagRef="+tag_id_all[2*i]+"&ZoneRef="+cellNum[2*i]+"&refresh=true");
+					//emailAlert.sendEmail("Sicheng", "Alert!","https://physicaltrackingsystemltd.onknowledgekubesandbox.co.uk/asset-alert?TagRef="+tag_id_all[2*i+1]+"&ZoneRef="+cellNum[2*i+1]+"&refresh=true");
 					dbAlert.sendDBAlert(tag_id_all[2*i], cellNum[2*i],reader_id_all[cellNum[2*i]-1], "Split", alertMessage);
 					dbAlert.sendDBAlert(tag_id_all[2*i+1], cellNum[2*i+1],reader_id_all[cellNum[2*i+1]-1], "Split", alertMessage);
-
-					//smsAlert.sendSMS(phoneNumber, alertMessage);
+					if(activateSMS){
+						//smsAlert.sendSMS(phoneNumber, alertMessage);
+						smsAlert.sendSMS(phoneNumber,"https://physicaltrackingsystemltd.onknowledgekubesandbox.co.uk/asset-alert?TagRef="+tag_id_all[2*i]+"&ZoneRef="+cellNum[2*i]+"&refresh=true");
+						smsAlert.sendSMS(phoneNumber,"https://physicaltrackingsystemltd.onknowledgekubesandbox.co.uk/asset-alert?TagRef="+tag_id_all[2*i]+"&ZoneRef="+cellNum[2*i]+"&refresh=true");
+						
+					}
+					System.out.println(alertMessage);
+					
 					departSent[i]=1;
 					togetherSent[i]=0;
+					}
 				}
-			}
+			
 		
 		//tags have been together for a certain time
 			if((tnow-tlastDepart[i])/1000>together_limit){
 				if(togetherSent[i]==0){
-					String alertMessage="Alert!Warning: "+tag_type_all[2*i]+" and "+ tag_type_all[2*i+1]+" are together for too long!";
-					emailAlert.sendEmail("Sicheng", "Alert!", "Warning: "+tag_type_all[2*i]+" and "+ tag_type_all[2*i+1]+" are together for too long!");	
-					dbAlert.sendDBAlert(tag_id_all[2*i], cellNum[2*i], reader_id_all[cellNum[2*i]-1], "Together", alertMessage);
-					dbAlert.sendDBAlert(tag_id_all[2*i+1], cellNum[2*i+1], reader_id_all[cellNum[2*i+1]-1], "Together", alertMessage);
-
-					//smsAlert.sendSMS(phoneNumber, alertMessage);
+					String alertMessage="Alert!"+tag_type_all[2*i]+" and "+ tag_type_all[2*i+1]+" are together for too long!";
+					//emailAlert.sendEmail("Sicheng", "Alert!", "Warning: "+tag_type_all[2*i]+" and "+ tag_type_all[2*i+1]+" are together for too long!");	
+					//emailAlert.sendEmail("Sicheng", "Alert!","https://physicaltrackingsystemltd.onknowledgekubesandbox.co.uk/asset-alert?TagRef="+tag_id_all[2*i]+"&ZoneRef="+cellNum[2*i]+"&refresh=true");
+					//emailAlert.sendEmail("Sicheng", "Alert!","https://physicaltrackingsystemltd.onknowledgekubesandbox.co.uk/asset-alert?TagRef="+tag_id_all[2*i+1]+"&ZoneRef="+cellNum[2*i+1]+"&refresh=true");
+					//dbAlert.sendDBAlert(tag_id_all[2*i], cellNum[2*i], reader_id_all[cellNum[2*i]-1], "Together", alertMessage);
+					//dbAlert.sendDBAlert(tag_id_all[2*i+1], cellNum[2*i+1], reader_id_all[cellNum[2*i+1]-1], "Together", alertMessage);
+					if(activateSMS){
+						smsAlert.sendSMS(phoneNumber,"https://physicaltrackingsystemltd.onknowledgekubesandbox.co.uk/asset-alert?TagRef="+tag_id_all[2*i]+"&ZoneRef="+cellNum[2*i]+"&refresh=true");
+						smsAlert.sendSMS(phoneNumber,"https://physicaltrackingsystemltd.onknowledgekubesandbox.co.uk/asset-alert?TagRef="+tag_id_all[2*i]+"&ZoneRef="+cellNum[2*i]+"&refresh=true");
+					}
+					//System.out.println(alertMessage);
 					togetherSent[i]=1;
 					departSent[i]=0;
 					}
@@ -270,7 +292,7 @@ public class ZonableLocation {
 			}
 		}
 		
-		
+		}
 		
 		//System.out.println("");
 		
@@ -306,11 +328,14 @@ public class ZonableLocation {
 				tag_id_all=location_settings.getAll("tag_id",String[].class);
 				tag_type_all=location_settings.getAll("tag_name",String[].class);
 				
+				useReadRate=location_settings.get("useReadRate",Boolean.class);
+				
 				reader_id_all=location_settings.getAll("reader_id",long[].class);
 				num_of_reads=location_settings.get("num_of_reads",int.class);
 				tag_exist_time=location_settings.get("tag_exist_time",int.class);
 				
 				Ini.Section alert_settings=ini.get("alert_settings");
+				activateSMS=alert_settings.get("activateSMS",boolean.class);
 				together_limit=alert_settings.get("together_limit",long.class);
 				depart_limit=alert_settings.get("depart_limit",long.class);
 				username=alert_settings.get("username",String.class);

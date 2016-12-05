@@ -47,7 +47,7 @@ public class EmailAlert {
 
 			Transport.send(message);
 
-			System.out.println(emailMessage);
+			//System.out.println(emailMessage);
 
 		} catch (MessagingException e) {
 			throw new RuntimeException(e);
